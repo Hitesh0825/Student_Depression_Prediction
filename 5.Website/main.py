@@ -47,4 +47,4 @@ if st.button('Predict'):
         st.success("✅ No Depression Risk")
 
     st.markdown("---")
-    st.markdown("Made with ❤️ by Vikash Tomar")
+    st.markdown("Made with ❤️ by Hitsh Sharma")
