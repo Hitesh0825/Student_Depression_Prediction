@@ -1,19 +1,41 @@
 import joblib
 import pandas as pd
 import streamlit as st
+import importlib.util
+import sys
+import subprocess
+
+# --- Ensure scikit-learn is installed (to load pipeline.pkl safely)
+if importlib.util.find_spec("sklearn") is None:
+    st.warning("Installing missing package: scikit-learn...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-learn"])
 
 st.set_page_config(page_title="Depression Prediction App")
 
-st.title(" 🧠 Depression Prediction App")
+st.title("🧠 Depression Prediction App")
 st.markdown("""
 Welcome to the Depression Prediction System!  
 Please fill in the details, and the model will predict whether depression is likely.  
 ---
 """)
 
-# ✅ Load objects (make sure these exist in your project folder)
-df = joblib.load("df.pkl")
-pipeline = joblib.load("pipeline.pkl")
+# --- Load objects safely ---
+try:
+    df = joblib.load("df.pkl")
+except FileNotFoundError:
+    st.error("`df.pkl` not found! Please make sure it's in the project folder.")
+    st.stop()
+
+try:
+    pipeline = joblib.load("pipeline.pkl")
+except FileNotFoundError:
+    st.error("`pipeline.pkl` not found! Please make sure it's in the project folder.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error loading pipeline.pkl: {e}")
+    st.info("This might be due to a version mismatch of scikit-learn. "
+            "Try installing the original version used to train the model.")
+    st.stop()
 
 st.header("Enter your inputs")
 
@@ -39,12 +61,15 @@ if st.button('Predict'):
     st.subheader("Your Input:")
     st.dataframe(one_df)
 
-    prediction = pipeline.predict(one_df)[0]
-
-    if prediction == 1:
-        st.error("⚠️ Depression Risk Present")
-    else:
-        st.success("✅ No Depression Risk")
+    try:
+        prediction = pipeline.predict(one_df)[0]
+        if prediction == 1:
+            st.error("⚠️ Depression Risk Present")
+        else:
+            st.success("✅ No Depression Risk")
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
+        st.info("This may be due to incompatible sklearn version. Consider retraining or using skops to save models.")
 
     st.markdown("---")
-    st.markdown("Made with ❤️ by Vikash Tomar")
+    st.markdown("Made with ❤️ by Hitesh Sharma")
